@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload & Compare Resume - AI Resume Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <div class="mb-4 text-center">
+    <h2 class="fw-bold text-white mb-2" style="font-family: 'Outfit', sans-serif;">New Resume Evaluation</h2>
+    <p class="text-muted">Compare your resume against any job description to extract missing keywords and receive AI recommendations.</p>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    
+    <!-- Quick Tips & Sample JDs (Left Column) -->
+    <div class="col-lg-4">
+      
+      <div class="custom-card p-4 mb-4">
+        <h5 class="fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">
+          <i class="bi bi-magic me-2 text-warning"></i> Quick Demo Presets
+        </h5>
+        <p class="text-muted small mb-3">Don't have a job description handy? Click below to auto-fill sample job specs:</p>
+        
+        <div class="d-flex flex-column gap-2 mb-3">
+          <button type="button" class="btn btn-outline-primary btn-sm text-start p-2.5 rounded-3 sample-jd-btn" data-sample="python">
+            <div class="fw-bold text-white"><i class="bi bi-code-slash me-1 text-primary-light"></i> Python Full-Stack Developer</div>
+            <small class="text-muted">Flask, React, PostgreSQL, Docker, AWS</small>
+          </button>
+
+          <button type="button" class="btn btn-outline-success btn-sm text-start p-2.5 rounded-3 sample-jd-btn" data-sample="data">
+            <div class="fw-bold text-white"><i class="bi bi-database me-1 text-success-light"></i> Data Engineer</div>
+            <small class="text-muted">Python, R, SQL, PostgreSQL, AWS</small>
+          </button>
+
+          <button type="button" class="btn btn-outline-info btn-sm text-start p-2.5 rounded-3 sample-jd-btn" data-sample="devops">
+            <div class="fw-bold text-white"><i class="bi bi-terminal me-1 text-accent-cyan"></i> DevOps Engineer</div>
+            <small class="text-muted">AWS, Docker, Kubernetes, Linux, CI/CD</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="custom-card p-4">
+        <h6 class="fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">
+          <i class="bi bi-info-circle-fill me-2 text-primary-light"></i> How it Works
+        </h6>
+        <ol class="text-muted small ps-3 mb-0 d-flex flex-column gap-2">
+          <li>Upload your resume in PDF format (maximum size 5MB).</li>
+          <li>Paste the targeted job posting text.</li>
+          <li>Our taxonomy parser scans 5 key technical categories (Languages, Frameworks, Databases, Tools & Concepts).</li>
+          <li>Receive your match score, missing skills list, and tailored suggestions.</li>
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- Upload Form (Right Column) -->
+    <div class="col-lg-8">
+      <div class="custom-card p-4 p-md-5">
+        
+        <form id="resumeUploadForm" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
+          
+          <!-- Job Title -->
+          <div class="mb-4">
+            <label for="job_title" class="form-label text-muted small fw-semibold">Target Position / Job Title <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text input-group-text-v2">
+                <i class="bi bi-briefcase"></i>
+              </span>
+              <input type="text" class="form-control form-control-v2" id="job_title" name="job_title" placeholder="e.g. Senior Full-Stack Python Developer" required>
+            </div>
+          </div>
+
+          <!-- Job Description -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="job_description" class="form-label text-muted small fw-semibold mb-0">Job Description Text <span class="text-danger">*</span></label>
+              <div class="text-muted extra-small">
+                <span id="wordCountDisplay" class="me-2">0 words</span>
+                <span id="charCountDisplay">0 chars</span>
+              </div>
+            </div>
+            <textarea class="form-control form-control-v2" id="job_description" name="job_description" rows="7" placeholder="Paste the complete job description here, including required skills, qualifications, and tools..." required></textarea>
+          </div>
+
+          <!-- PDF Resume Upload Dropzone -->
+          <div class="mb-4">
+            <label class="form-label text-muted small fw-semibold">Upload Resume (PDF Format, Max 5MB) <span class="text-danger">*</span></label>
+            
+            <div class="upload-dropzone-v2" id="uploadDropzone">
+              <input type="file" class="d-none" id="resume" name="resume" accept=".pdf" required>
+              
+              <div class="dropzone-content">
+                <i class="bi bi-cloud-arrow-up-fill upload-icon-v2"></i>
+                <h5 class="fw-bold text-white mb-1">Drag & Drop PDF Resume Here</h5>
+                <p class="text-muted small mb-3">or click to choose a document from your computer</p>
+                <button type="button" class="btn btn-outline-light btn-sm rounded-pill px-4" onclick="document.getElementById('resume').click()">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> Select PDF Document
+                </button>
+              </div>
+
+              <!-- Selected File Preview -->
+              <div id="fileInfo" class="d-none mt-2">
+                <div class="d-flex align-items-center justify-content-center gap-3 p-3 rounded-4" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);">
+                  <i class="bi bi-file-earmark-pdf-fill fs-1 text-danger"></i>
+                  <div class="text-start">
+                    <h6 id="fileNameDisplay" class="fw-bold text-white mb-0">resume.pdf</h6>
+                    <small id="fileSizeDisplay" class="text-muted">0.00 MB</small>
+                  </div>
+                  <button type="button" id="removeFileBtn" class="btn btn-sm btn-link text-danger p-0 ms-4" title="Remove PDF">
+                    <i class="bi bi-trash-fill fs-4"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 mt-2 fs-6 btn-glow">
+            <i class="bi bi-cpu-fill me-2 fs-5"></i> Run Skill Extraction & Match Analysis
+          </button>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

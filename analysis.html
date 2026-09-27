@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Match Analysis - {{ analysis.job_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  
+  <!-- Header Bar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <a href="{{ url_for('history') }}" class="text-muted text-decoration-none small">
+        <i class="bi bi-arrow-left me-1"></i> Back to History
+      </a>
+      <h2 class="fw-bold text-white mb-1 mt-1" style="font-family: 'Outfit', sans-serif;">{{ analysis.job_title }}</h2>
+      <p class="text-muted small mb-0">
+        Evaluated on {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }} &bull; File: <span class="text-light fw-medium">{{ analysis.resume_filename }}</span>
+      </p>
+    </div>
+    
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('upload') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+        <i class="bi bi-plus-lg me-1"></i> New Scan
+      </a>
+      <button onclick="window.print()" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-printer me-1"></i> Print / Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Score Summary Hero Panel -->
+  <div class="custom-card p-4 p-md-5 mb-4" style="background: linear-gradient(135deg, rgba(18, 25, 41, 0.9) 0%, rgba(28, 38, 62, 0.8) 100%); border-color: rgba(99, 102, 241, 0.3);">
+    <div class="row align-items-center">
+      
+      <!-- Doughnut Gauge & Grade -->
+      <div class="col-md-4 text-center border-end border-secondary border-opacity-25 py-3">
+        <span class="text-muted small fw-semibold text-uppercase tracking-wider">Overall Resume Alignment</span>
+        
+        <div class="position-relative d-inline-block mt-3 mb-2" style="width: 180px; height: 180px;">
+          <canvas id="scoreGaugeChart"></canvas>
+          <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h1 class="fw-bold text-white mb-0" style="font-size: 2.3rem; font-family: 'Outfit', sans-serif;">{{ analysis.match_score }}%</h1>
+            <span class="badge 
+              {% if analysis.match_score >= 80 %}bg-success text-white
+              {% elif analysis.match_score >= 50 %}bg-warning text-dark
+              {% else %}bg-danger text-white{% endif %} rounded-pill small px-3 py-1">
+              {% if analysis.match_score >= 80 %}Strong Fit
+              {% elif analysis.match_score >= 50 %}Moderate Fit
+              {% else %}Low Fit{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill Metrics Breakdown -->
+      <div class="col-md-8 ps-md-5 py-3">
+        <h5 class="fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">Skill Alignment Overview</h5>
+        
+        <div class="row g-3">
+          <div class="col-sm-4">
+            <div class="p-3 rounded-4" style="background: rgba(9, 13, 22, 0.7); border: 1px solid var(--border-color);">
+              <span class="text-muted small d-block">Required Skills (JD)</span>
+              <h2 class="fw-bold text-white mb-0 mt-1" style="font-family: 'Outfit', sans-serif;">{{ analysis.jd_skills_list|length }}</h2>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="p-3 rounded-4" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+              <span class="text-success-light small d-block">Matched Skills</span>
+              <h2 class="fw-bold text-success-light mb-0 mt-1" style="font-family: 'Outfit', sans-serif;">{{ analysis.matched_skills_list|length }}</h2>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="p-3 rounded-4" style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3);">
+              <span class="text-danger-light small d-block">Missing Skills</span>
+              <h2 class="fw-bold text-danger-light mb-0 mt-1" style="font-family: 'Outfit', sans-serif;">{{ analysis.missing_skills_list|length }}</h2>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual Charts & Comparisons -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Competency Comparison Bar Chart -->
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-white mb-0" style="font-family: 'Outfit', sans-serif;">
+            <i class="bi bi-bar-chart-fill me-2 text-primary-light"></i> Skills Comparison
+          </h5>
+          <span class="text-muted small">Matched vs Missing</span>
+        </div>
+        <div style="height: 260px;" class="position-relative">
+          <canvas id="comparisonBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations & Suggestions Card -->
+    <div class="col-lg-6">
+      <div class="custom-card p-4 h-100">
+        <h5 class="fw-bold text-white mb-3" style="font-family: 'Outfit', sans-serif;">
+          <i class="bi bi-lightbulb-fill me-2 text-warning"></i> Automated Improvement Suggestions
+        </h5>
+        
+        <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+          {% for suggestion in analysis.suggestions_list %}
+          <li class="p-3 rounded-3" style="background: rgba(9, 13, 22, 0.6); border: 1px solid var(--border-color);">
+            <div class="d-flex align-items-start gap-2 text-light small lh-base">
+              <span>{{ suggestion }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detailed Skills Categorization Grid -->
+  <div class="row g-4 mb-4">
+    
+    <!-- Matched Skills -->
+    <div class="col-md-6">
+      <div class="custom-card p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-bold text-success-light mb-0" style="font-family: 'Outfit', sans-serif;">
+            <i class="bi bi-check-circle-fill me-2"></i> Matched Competencies ({{ analysis.matched_skills_list|length }})
+          </h5>
+        </div>
+
+        {% if analysis.matched_skills_list %}
+        <div class="d-flex flex-wrap gap-2">
+          {% for skill in analysis.matched_skills_list %}
+          <span class="badge-skill-v2 badge-matched-v2">
+            <i class="bi bi-check-lg"></i> {{ skill }}
+          </span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">No overlapping taxonomy skills were detected between your resume and the job description.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Missing Skills -->
+    <div class="col-md-6">
+      <div class="custom-card p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-bold text-danger-light mb-0" style="font-family: 'Outfit', sans-serif;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Missing Competencies ({{ analysis.missing_skills_list|length }})
+          </h5>
+        </div>
+
+        {% if analysis.missing_skills_list %}
+        <div class="d-flex flex-wrap gap-2">
+          {% for skill in analysis.missing_skills_list %}
+          <span class="badge-skill-v2 badge-missing-v2">
+            <i class="bi bi-x-lg"></i> {{ skill }}
+          </span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-success-light small mb-0">🎉 Excellent! Your resume covers all key taxonomy skills mentioned in this job description.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initAnalysisCharts(
+      {{ analysis.match_score }},
+      {{ analysis.matched_skills_list|length }},
+      {{ analysis.missing_skills_list|length }}
+    );
+  });
+</script>
+{% endblock %}
